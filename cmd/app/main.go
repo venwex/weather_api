@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"weather_api/internal/client"
 	"weather_api/internal/handler"
 	"weather_api/internal/repository"
 	"weather_api/internal/service"
@@ -19,7 +20,8 @@ func main() {
 	defer db.Close()
 
 	repo := repository.NewRepository(db)
-	svc := service.NewService(repo)
+	weatherClient := client.NewOpenMeteoClient(nil)
+	svc := service.NewService(repo, weatherClient)
 	handler := handler.NewHandler(svc)
 
 	mux := initRoutes(handler)
@@ -40,7 +42,7 @@ func initRoutes(h *handler.Handler) *http.ServeMux {
 	mux.HandleFunc("POST /users/{id}/cities", h.Cities.AddCity)
 	mux.HandleFunc("DELETE /users/{id}/cities/{city_id}", h.Cities.DeleteCity)
 
-	//mux.HandleFunc("GET /users/{id}/weather")
-	//mux.HandleFunc("GET /users/{id}/weather/history?city=Almaty")
+	mux.HandleFunc("GET /users/{id}/weather", h.Weather.GetUserWeather)
+	mux.HandleFunc("GET /users/{id}/weather/history", h.Weather.GetWeatherHistory)
 	return mux
 }

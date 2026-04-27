@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/db/migrations/000001_create_users_table.up.sql" value="0d6b519b-81cd-446e-ad1c-c5dc6cb779ff" />
+    <file url="file://$PROJECT_DIR$/db/migrations/000002_create_users_cities_table.down.sql" value="0d6b519b-81cd-446e-ad1c-c5dc6cb779ff" />
+    <file url="file://$PROJECT_DIR$/db/migrations/000002_create_users_cities_table.up.sql" value="0d6b519b-81cd-446e-ad1c-c5dc6cb779ff" />
+    <file url="file://$PROJECT_DIR$/db/migrations/000003_create_weather_history_table.down.sql" value="0d6b519b-81cd-446e-ad1c-c5dc6cb779ff" />
+    <file url="file://$PROJECT_DIR$/db/migrations/000003_create_weather_history_table.up.sql" value="0d6b519b-81cd-446e-ad1c-c5dc6cb779ff" />
+  </component>
+</project>

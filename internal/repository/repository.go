@@ -27,13 +27,15 @@ type WeatherHistoryRepository interface {
 }
 
 type Repository struct {
-	Users  UserRepository
-	Cities CityRepository
+	Users          UserRepository
+	Cities         CityRepository
+	WeatherHistory WeatherHistoryRepository
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
-		Users:  NewUserRepo(db),
-		Cities: NewCityRepo(db),
+		Users:          NewUserRepo(db),
+		Cities:         NewCityRepo(db),
+		WeatherHistory: NewWeatherHistoryRepository(db),
 	}
 }
