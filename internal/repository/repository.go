@@ -13,6 +13,7 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user models.User) (models.User, error)
 	UpdateUser(ctx context.Context, id int, user models.User) (models.User, error)
 	DeleteUser(ctx context.Context, id int) error
+	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 }
 
 type CityRepository interface {

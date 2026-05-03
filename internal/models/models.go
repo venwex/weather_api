@@ -3,12 +3,14 @@ package models
 import "time"
 
 type User struct {
-	ID        int        `db:"id"`
-	Name      string     `db:"name"`
-	Email     string     `db:"email"`
-	CreatedAt time.Time  `db:"created_at"`
-	UpdatedAt time.Time  `db:"updated_at"`
-	DeletedAt *time.Time `db:"deleted_at"`
+	ID           int        `db:"id"`
+	Name         string     `db:"name"`
+	Email        string     `db:"email"`
+	Role         string     `db:"role"`
+	PasswordHash string     `db:"password_hash"`
+	CreatedAt    time.Time  `db:"created_at"`
+	UpdatedAt    time.Time  `db:"updated_at"`
+	DeletedAt    *time.Time `db:"deleted_at"`
 }
 
 type UserCity struct {

@@ -1,10 +1,8 @@
 package handler
 
 import (
-	"log"
 	"net/http"
-	"strconv"
-	"strings"
+	"weather_api/internal/auth"
 	"weather_api/internal/service"
 	u "weather_api/internal/utils"
 )
@@ -20,59 +18,39 @@ func NewWeatherHandler(weather *service.WeatherService) *WeatherHandler {
 }
 
 func (h *WeatherHandler) GetUserWeather(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	userID, err := u.GetID(r)
+	user, err := auth.GetCurrentUser(r.Context())
 	if err != nil {
-		log.Printf("error getting user id: %v", err)
-		u.WriteError(w, http.StatusBadRequest, err.Error())
+		u.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	response, err := h.Weather.GetUserWeather(ctx, userID)
+	weather, err := h.Weather.GetUserWeather(r.Context(), user.ID)
 	if err != nil {
-		log.Printf("error getting user weather: %v", err)
 		u.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	u.WriteJSON(w, http.StatusOK, response)
+	u.WriteJSON(w, http.StatusOK, weather)
 }
 
 func (h *WeatherHandler) GetWeatherHistory(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	userID, err := u.GetID(r)
+	user, err := auth.GetCurrentUser(r.Context())
 	if err != nil {
-		log.Printf("error getting user id: %v", err)
-		u.WriteError(w, http.StatusBadRequest, err.Error())
+		u.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	city := strings.TrimSpace(r.URL.Query().Get("city"))
+	city := r.URL.Query().Get("city")
 	if city == "" {
-		u.WriteError(w, http.StatusBadRequest, "city query param is required")
+		u.WriteError(w, http.StatusBadRequest, "city is required")
 		return
 	}
 
-	limit := 10
-	limitStr := r.URL.Query().Get("limit")
-	if limitStr != "" {
-		parsedLimit, err := strconv.Atoi(limitStr)
-		if err != nil || parsedLimit <= 0 {
-			u.WriteError(w, http.StatusBadRequest, "invalid limit")
-			return
-		}
-
-		limit = parsedLimit
-	}
-
-	response, err := h.Weather.GetWeatherHistory(ctx, userID, city, limit)
+	history, err := h.Weather.GetWeatherHistory(r.Context(), user.ID, city, 10)
 	if err != nil {
-		log.Printf("error getting weather history: %v", err)
 		u.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	u.WriteJSON(w, http.StatusOK, response)
+	u.WriteJSON(w, http.StatusOK, history)
 }

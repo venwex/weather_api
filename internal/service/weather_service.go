@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-
 	"weather_api/internal/client"
 	"weather_api/internal/models"
 	"weather_api/internal/repository"
@@ -73,6 +72,8 @@ func (s *WeatherService) GetUserWeather(ctx context.Context, userID int) (models
 	return response, nil
 }
 
+var ErrCityRequired = errors.New("city is required")
+
 func (s *WeatherService) GetWeatherHistory(ctx context.Context, userID int, city string, limit int) (models.WeatherHistoryResponse, error) {
 	if userID <= 0 {
 		return models.WeatherHistoryResponse{}, errors.New("invalid user id")
@@ -80,7 +81,7 @@ func (s *WeatherService) GetWeatherHistory(ctx context.Context, userID int, city
 
 	city = strings.TrimSpace(city)
 	if city == "" {
-		return models.WeatherHistoryResponse{}, errors.New("city is required")
+		return models.WeatherHistoryResponse{}, ErrCityRequired
 	}
 
 	if limit <= 0 {

@@ -6,6 +6,7 @@ type Handler struct {
 	Users   *UserHandler
 	Cities  *CityHandler
 	Weather *WeatherHandler
+	Auth    *AuthHandler
 }
 
 func NewHandler(svc *service.Service) *Handler {
@@ -13,5 +14,6 @@ func NewHandler(svc *service.Service) *Handler {
 		Users:   NewUserHandler(svc.User),
 		Cities:  NewCityHandler(svc.City),
 		Weather: NewWeatherHandler(svc.Weather),
+		Auth:    NewAuthHandler(svc.Auth),
 	}
 }

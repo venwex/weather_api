@@ -63,3 +63,7 @@ func (s *UserService) DeleteUser(ctx context.Context, id int) error {
 
 	return s.users.DeleteUser(ctx, id)
 }
+
+func (s *UserService) Me(ctx context.Context, userID int) (m.User, error) {
+	return s.users.GetUserByID(ctx, userID)
+}

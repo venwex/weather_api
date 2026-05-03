@@ -2,11 +2,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"weather_api/internal/models"
 
 	"github.com/jmoiron/sqlx"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type UserRepo struct {
 	db *sqlx.DB
@@ -51,17 +55,27 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, error)
 
 func (r *UserRepo) CreateUser(ctx context.Context, user models.User) (models.User, error) {
 	query := `
-		INSERT INTO users (name, email)
-		VALUES ($1, $2)
-		RETURNING id, name, email, created_at, updated_at, deleted_at;
+		INSERT INTO users (name, email, password_hash, role)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, name, email, role, password_hash, created_at, updated_at, deleted_at
 	`
 
-	var created models.User
-	if err := r.db.GetContext(ctx, &created, query, user.Name, user.Email); err != nil {
-		return models.User{}, err
+	if user.Role == "" {
+		user.Role = "user"
 	}
 
-	return created, nil
+	var created models.User
+	err := r.db.GetContext(
+		ctx,
+		&created,
+		query,
+		user.Name,
+		user.Email,
+		user.PasswordHash,
+		user.Role,
+	)
+
+	return created, err
 }
 
 func (r *UserRepo) UpdateUser(ctx context.Context, id int, user models.User) (models.User, error) {
@@ -92,4 +106,23 @@ func (r *UserRepo) DeleteUser(ctx context.Context, id int) error {
 
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
+}
+
+func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	query := `
+		SELECT id, name, email, password_hash, role, created_at, deleted_at
+		FROM users
+		WHERE email = $1 AND deleted_at IS NULL
+	`
+
+	var user models.User
+	err := r.db.GetContext(ctx, &user, query, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, ErrNotFound
+		}
+		return models.User{}, err
+	}
+
+	return user, nil
 }

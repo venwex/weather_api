@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"weather_api/internal/auth"
 	"weather_api/internal/models"
 	"weather_api/internal/service"
 	u "weather_api/internal/utils"
@@ -117,4 +118,20 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) { // so
 	}
 
 	u.WriteJSON(w, http.StatusNoContent, nil)
+}
+
+func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
+	currentUser, err := auth.GetCurrentUser(r.Context())
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Users.Me(r.Context(), currentUser.ID)
+	if err != nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	u.WriteJSON(w, http.StatusOK, user)
 }

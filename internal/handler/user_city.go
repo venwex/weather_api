@@ -2,9 +2,9 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"weather_api/internal/handler/dto"
+	"strconv"
+	"weather_api/internal/auth"
 	"weather_api/internal/service"
 	u "weather_api/internal/utils"
 )
@@ -17,27 +17,26 @@ func NewCityHandler(cities *service.CityService) *CityHandler {
 	return &CityHandler{Cities: cities}
 }
 
+type addCityRequest struct {
+	City string `json:"city"`
+}
+
 func (h *CityHandler) AddCity(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	id, err := u.GetID(r) // user_id
+	user, err := auth.GetCurrentUser(r.Context())
 	if err != nil {
-		log.Printf("error getting user id: %v", err)
-		u.WriteError(w, http.StatusBadRequest, err.Error())
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	var req dto.CreateCityRequest
+	var req addCityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("error decoding city: %v", err)
-		u.WriteError(w, http.StatusBadRequest, err.Error())
+		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
 
-	city, err := h.Cities.AddCity(ctx, id, req.City)
+	city, err := h.Cities.AddCity(r.Context(), user.ID, req.City)
 	if err != nil {
-		log.Printf("error adding city: %v", err)
-		u.WriteError(w, http.StatusInternalServerError, err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -45,19 +44,15 @@ func (h *CityHandler) AddCity(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CityHandler) GetCities(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	id, err := u.GetID(r)
+	user, err := auth.GetCurrentUser(r.Context())
 	if err != nil {
-		log.Printf("error getting user id: %v", err)
-		u.WriteError(w, http.StatusBadRequest, err.Error())
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	cities, err := h.Cities.GetCities(ctx, id)
+	cities, err := h.Cities.GetCities(r.Context(), user.ID)
 	if err != nil {
-		log.Printf("error getting cities: %v", err)
-		u.WriteError(w, http.StatusInternalServerError, err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -65,27 +60,23 @@ func (h *CityHandler) GetCities(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CityHandler) DeleteCity(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	userID, err := u.GetID(r)
+	user, err := auth.GetCurrentUser(r.Context())
 	if err != nil {
-		log.Printf("error getting user id: %v", err)
-		u.WriteError(w, http.StatusBadRequest, err.Error())
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	cityID, err := u.GetCityID(r)
+	cityID, err := strconv.Atoi(r.PathValue("city_id"))
 	if err != nil || cityID <= 0 {
-		log.Printf("error getting city id: %v", err)
-		u.WriteError(w, http.StatusBadRequest, "invalid city id")
+		http.Error(w, "invalid city id", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Cities.DeleteCity(ctx, userID, cityID); err != nil {
-		log.Printf("error deleting city: %v", err)
-		u.WriteError(w, http.StatusInternalServerError, err.Error())
+	err = h.Cities.DeleteCity(r.Context(), user.ID, cityID)
+	if err != nil {
+		http.Error(w, "city not found", http.StatusNotFound)
 		return
 	}
 
-	u.WriteJSON(w, http.StatusNoContent, nil)
+	w.WriteHeader(http.StatusNoContent)
 }
