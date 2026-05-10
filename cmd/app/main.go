@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"weather_api/internal/config"
 
 	"weather_api/internal/auth"
 	"weather_api/internal/client"
@@ -40,7 +41,9 @@ func main() {
 
 	tokenManager := auth.NewTokenManager(jwtSecret, accessTTL)
 
-	db, err := sqlx.Open("postgres", "postgres://weather:weatherpass@localhost:5433/weather_db?sslmode=disable")
+	cfg := config.NewPostgresConfig()
+
+	db, err := sqlx.Open("postgres", cfg.DSN())
 	if err != nil {
 		log.Fatalf("Connection error to the DB: %v", err)
 	}
@@ -71,11 +74,11 @@ func initRoutes(h *handler.Handler, tokenManager *auth.TokenManager) *http.Serve
 	adminMW := middleware.RequireRole("admin")
 
 	protected := func(fn http.HandlerFunc) http.Handler {
-		return authMW(http.HandlerFunc(fn))
+		return authMW(fn)
 	}
 
 	adminOnly := func(fn http.HandlerFunc) http.Handler {
-		return authMW(adminMW(http.HandlerFunc(fn)))
+		return authMW(adminMW(fn))
 	}
 
 	mux.HandleFunc("POST /auth/register", h.Auth.Register)
